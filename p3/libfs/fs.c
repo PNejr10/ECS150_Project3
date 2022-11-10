@@ -37,6 +37,16 @@ struct rootDir rd;
 int fs_mount(const char *diskname)
 {
 	/* TODO: Phase 1 */
+	int open = block_disk_open(diskname);
+	if(open == -1){
+		printf("Unable to open the Disk\n");
+		return -1;
+	}
+	if(block_read(0, &sb) == -1){
+		printf("Could not read the block\n");
+	}
+	
+
 }
 
 int fs_umount(void)
