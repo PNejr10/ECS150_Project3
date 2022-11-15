@@ -68,22 +68,29 @@ int fs_mount(const char *diskname)
 
 int fs_umount(void)
 {
-	/* TODO: Phase 1 */
+	if(block_read(0, &sb) == -1){
+		return -1;
+	}
+	for(int i = 1; i <= sb->Fat_block; i++){
+		block_write(i, &Fb.Fat_Block_index[i-1]);	
+	}
+	block_write(sb->Fat_block+1,&rd);
+
 }
 
 int fs_info(void)
 {
-	/* TODO: Phase 1 
+	/* TODO: Phase 1 */
 
 	printf("FS info: \n");
-	printf("Virtual Desk %i\n", sb.VD_Block);
-	printf("Root Dir %i\n", sb.Root_Dir);
-	printf("Data Block %i\n", sb.Data_Block);
-	printf("Amout of Data Block %i\n", sb.Amout_Data_Block);
-	printf("Number of Fat %i\n", sb.Fat_Number);
-	printf("Padding %i\n", sb.padding);
+	printf("Virtual Desk %i\n", sb->total_Block_counter);
+	printf("Root Dir %i\n", sb->Root_Dir);
+	printf("Data Block %i\n", sb->Data_Block);
+	printf("Amout of Data Block %i\n", sb->Amout_Data_Block);
+	printf("Number of Fat %i\n", sb->Fat_block);
+	printf("Padding %i\n", sb->padding);
 
-*/
+
 }
 
 int fs_create(const char *filename)
