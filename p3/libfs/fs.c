@@ -25,7 +25,7 @@ struct  __attribute__((__packed__)) fatBlock {
 };
 
 struct  __attribute__((__packed__)) rootDir {
-	char 		Filename[FS_FILENAME_LEN];
+	char* 		Filename;
 	uint32_t 	file_Size;
 	uint16_t 	index;
 	uint8_t 	padding[10];
@@ -33,13 +33,13 @@ struct  __attribute__((__packed__)) rootDir {
 
 struct superBlock *sb;
 struct fatBlock Fb; 
-struct rootDir *rd;
+struct rootDir *rd[FS_FILE_MAX_COUNT];
 
 int fs_mount(const char *diskname)
 {
 	sb = malloc(sizeof(struct superBlock));
 	//Fb = malloc(sizeof(struct fatBlock));
- 	rd = malloc (sizeof(struct rootDir));
+ 	rd[FS_FILE_MAX_COUNT] = malloc (128 * sizeof(struct rootDir));
 
 
 	int open = block_disk_open(diskname);
@@ -93,14 +93,47 @@ int fs_info(void)
 
 }
 
-int fs_create(const char *filename)
+int fs_create(const char *filename) // tester.c
 {
 	/* TODO: Phase 2 */
+	if(strlen(filename) > FS_FILENAME_LEN )
+		return -1;
+	int add = 0;
+	for(int i =0; i < FS_FILE_MAX_COUNT; i++){
+		if(rd[i]->Filename == NULL){
+			rd[i]->Filename = filename;
+			rd[i]->file_Size = 0;
+			rd[i]->index = 0xFFFF;
+			add = 1;
+			break;
+		}
+	}
+	if (add == 1)
+		return 0;
+	else 
+		return -1;
 }
 
 int fs_delete(const char *filename)
 {
 	/* TODO: Phase 2 */
+	if(strlen(filename) > FS_FILENAME_LEN )
+		return -1;
+	int delete = 0;
+	for(int i =0; i < FS_FILE_MAX_COUNT; i++){
+		if(rd[i]->Filename == filename){
+			rd[i]->Filename = NULL;
+			rd[i]->file_Size = 0;
+			//free();
+			rd[i]->index = 0xFFFF;
+			break;
+		}
+	}
+	if (delete == 1)
+		return 0;
+	else 
+		return -1;
+	
 }
 
 int fs_ls(void)
