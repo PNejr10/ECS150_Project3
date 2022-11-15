@@ -10,38 +10,38 @@
 /* TODO: Phase 1 */
 
 struct  __attribute__((__packed__)) superBlock {
-	char	 signature[8];
-	uint16_t total_Block_counter;
-	uint16_t Root_Dir;
-	uint16_t Data_Block;
-	uint16_t Amout_Data_Block;
-	uint8_t  Fat_block;
-	uint8_t padding [4079];
+	char	 	signature[8];
+	uint16_t 	total_Block_counter;
+	uint16_t 	Root_Dir;
+	uint16_t 	Data_Block;
+	uint16_t 	Amout_Data_Block;
+	uint8_t 	Fat_block;
+	uint8_t		padding [4079];
 };
 
 struct  __attribute__((__packed__)) fatBlock {
-	uint16_t Fat_Block_index;
-	// fat_block_index[1]
+	uint16_t 	*Fat_Block_index;
+	
 };
 
 struct  __attribute__((__packed__)) rootDir {
-	char Filename[FS_FILENAME_LEN];
-	uint32_t file_Size;
-	uint16_t index;
-	uint8_t padding[10];
+	char 		Filename[FS_FILENAME_LEN];
+	uint32_t 	file_Size;
+	uint16_t 	index;
+	uint8_t 	padding[10];
 };
 
-
+struct superBlock *sb;
+struct fatBlock Fb; 
+struct rootDir *rd;
 
 int fs_mount(const char *diskname)
 {
-	struct superBlock *sb = malloc(sizeof(struct superBlock));
-	memeset(sb, 0, BLOCK_SIZE);
-	struct fatBlock *Fb = malloc(sizeof(struct fatBlock));
-	memeset(Fb, 0, BLOCK_SIZE);
-	struct rootDir *rd = malloc (sizeof(struct rootDir));
-	memeset(rd, 0, BLOCK_SIZE);
-	/* TODO: Phase 1 */
+	sb = malloc(sizeof(struct superBlock));
+	//Fb = malloc(sizeof(struct fatBlock));
+ 	rd = malloc (sizeof(struct rootDir));
+
+
 	int open = block_disk_open(diskname);
 	if(open == -1){
 		return -1;
@@ -49,16 +49,19 @@ int fs_mount(const char *diskname)
 	if(block_read(0, &sb) == -1){
 		return -1;
 	}
-	
-	if(!strcomp(sb->signature,"ECS150FS", 8)){
+	if(strcomp(sb->signature,"ECS150FS", 8) != 0){
 		return -1;
 	}
 	if(sb->total_Block_counter != block_disk_count()){
 		return -1;
 	}
-	
 
+	Fb.Fat_Block_index = malloc(BLOCK_SIZE *(sb->Fat_block)* 2);
+	for(int i = 1; i <= sb->Fat_block; i ++){
+		block_read(i, &Fb.Fat_Block_index[i-1]);	
+	}
 
+	block_read(sb->Fat_block+1,&rd);
 
 
 }
