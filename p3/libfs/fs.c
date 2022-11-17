@@ -9,6 +9,7 @@
 
 /* TODO: Phase 1 */
 
+int mount = 0;
 struct  __attribute__((__packed__)) superBlock {
 	char	 	signature[8];
 	uint16_t 	total_Block_counter;
@@ -62,12 +63,16 @@ int fs_mount(const char *diskname)
 	}
 
 	block_read(sb->Fat_block+1,&rd);
+	mount = 1;
+	return 0;
 
 
 }
 
 int fs_umount(void)
 {
+	if (mount == 0)	
+		return -1;
 	if(block_read(0, &sb) == -1){
 		return -1;
 	}
@@ -75,6 +80,15 @@ int fs_umount(void)
 		block_write(i, &Fb.Fat_Block_index[i-1]);	
 	}
 	block_write(sb->Fat_block+1,&rd);
+	int close = block_disk_close();
+	if(close == -1){
+		return -1;
+	}
+	else{
+		mount =0;
+		return 0;
+	} 
+	
 
 }
 
@@ -89,19 +103,29 @@ int fs_info(void)
 	printf("Amout of Data Block %i\n", sb->Amout_Data_Block);
 	printf("Number of Fat %i\n", sb->Fat_block);
 	printf("Padding %i\n", sb->padding);
-
+	int zeros=0;
+	for (int  i =0; i< sb->Fat_block; i++ ){
+		if(Fb.Fat_Block_index[i] == 0)
+			zeros++;
+	}
+	printf("Fat ratio %i\n", zeros/sb->Fat_block);
 
 }
 
 int fs_create(const char *filename) // tester.c
 {
-	/* TODO: Phase 2 */
-	if(strlen(filename) > FS_FILENAME_LEN )
+	/* TODO: Phase 2 
+	 @filename is invalid, get the size of the array
+	*/
+	if(strlen(filename) > FS_FILENAME_LEN || mount == 0)
 		return -1;
 	int add = 0;
 	for(int i =0; i < FS_FILE_MAX_COUNT; i++){
-		if(rd[i]->Filename == NULL){
-			rd[i]->Filename = filename;
+		if(strcmp(rd[i]->Filename, filename) == 0)
+			return -1;
+		
+		if(strcmp(rd[i]->Filename, "/0")==0){
+			strcpy(rd[i]->Filename, filename);
 			rd[i]->file_Size = 0;
 			rd[i]->index = 0xFFFF;
 			add = 1;
@@ -117,20 +141,31 @@ int fs_create(const char *filename) // tester.c
 int fs_delete(const char *filename)
 {
 	/* TODO: Phase 2 */
-	if(strlen(filename) > FS_FILENAME_LEN )
+	if(strlen(filename) > FS_FILENAME_LEN || mount == 0)
 		return -1;
+	
 	int delete = 0;
+	int fat_index = 0;
 	for(int i =0; i < FS_FILE_MAX_COUNT; i++){
-		if(rd[i]->Filename == filename){
-			rd[i]->Filename = NULL;
+
+		if(strcmp(filename, rd[i]->Filename)==0){
+			rd[i]->Filename = "\0";
 			rd[i]->file_Size = 0;
-			//free();
+			fat_index =rd[i]->index;
 			rd[i]->index = 0xFFFF;
 			break;
 		}
 	}
-	if (delete == 1)
+
+	if (delete == 1){
+		for(int i =fat_index+1; i<FS_FILE_MAX_COUNT; i++){
+			Fb.Fat_Block_index[i] = 0;
+			if(Fb.Fat_Block_index[i+1] == 0xFFFF)
+				break; 
+		}
 		return 0;
+	}
+	
 	else 
 		return -1;
 	
@@ -139,6 +174,18 @@ int fs_delete(const char *filename)
 int fs_ls(void)
 {
 	/* TODO: Phase 2 */
+	if(mount == 0)
+		return -1;
+	printf("FS ls \n");
+	for(int i =0; i< FS_FILE_MAX_COUNT; i++){
+		if(strcmp(rd[i]->Filename, "\0")!=0){
+			printf("File name %s, File size %d, First Data Block %d\n", 
+			rd[i]->Filename, rd[i]->file_Size, rd[i]->index);
+		}
+
+	}
+	return 0;
+
 }
 
 int fs_open(const char *filename)
