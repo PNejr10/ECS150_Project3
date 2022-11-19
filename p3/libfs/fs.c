@@ -49,8 +49,8 @@ int fs_mount(const char *diskname)
 {
 	sb = malloc(sizeof(struct superBlock));
 	//Fb = malloc(sizeof(struct fatBlock));
- 	rd[FS_FILE_MAX_COUNT] = malloc (128 * sizeof(struct rootDir));
-	fileD[FS_OPEN_MAX_COUNT] = malloc(FS_OPEN_MAX_COUNT * (sizeof(struct file_descriptor)));
+ 	//rd[FS_FILE_MAX_COUNT] = malloc (128 * sizeof(struct rootDir));
+	//fileD[FS_OPEN_MAX_COUNT] = malloc(FS_OPEN_MAX_COUNT * (sizeof(struct file_descriptor)));
 
 
 	int open = block_disk_open(diskname);
@@ -60,7 +60,7 @@ int fs_mount(const char *diskname)
 	if(block_read(0, &sb) == -1){
 		return -1;
 	}
-	if(strcomp(sb->signature,"ECS150FS", 8) != 0){
+	if(strcmp(sb->signature,"ECS150FS") != 0){
 		return -1;
 	}
 	if(sb->total_Block_counter != block_disk_count()){
@@ -114,7 +114,6 @@ int fs_info(void)
 	printf("Data Block %i\n", sb->Data_Block);
 	printf("Amout of Data Block %i\n", sb->Amout_Data_Block);
 	printf("Number of Fat %i\n", sb->Fat_block);
-	printf("Padding %d\n", sb->padding);
 	int zeros=0;
 	for (int  i =0; i< sb->Fat_block; i++ ){
 		if(Fb.Fat_Block_index[i] == 0)
@@ -287,10 +286,22 @@ int fs_lseek(int fd, size_t offset)
 int fs_write(int fd, void *buf, size_t count)
 {
 	/* TODO: Phase 4 */
+	if(fd)
+		return -1;
+	if(count > 0)
+		return -1;
+	printf("%p\n", buf);
+	return 0;
 }
 
 int fs_read(int fd, void *buf, size_t count)
 {
 	/* TODO: Phase 4 */
+	if(fd)
+		return -1;
+	if(count > 0)
+		return -1;
+	printf("%p\n", buf);
+	return 0;
 }
 
