@@ -105,21 +105,24 @@ int fs_umount(void)
 int fs_info(void)
 {
 	/* TODO: Phase 1 */
-
+	if(mount == 0){
+		return -1;
+	}
 	printf("FS info: \n");
 	printf("Virtual Desk %i\n", sb->total_Block_counter);
 	printf("Root Dir %i\n", sb->Root_Dir);
 	printf("Data Block %i\n", sb->Data_Block);
 	printf("Amout of Data Block %i\n", sb->Amout_Data_Block);
 	printf("Number of Fat %i\n", sb->Fat_block);
-	printf("Padding %i\n", sb->padding);
+	printf("Padding %d\n", sb->padding);
 	int zeros=0;
 	for (int  i =0; i< sb->Fat_block; i++ ){
 		if(Fb.Fat_Block_index[i] == 0)
 			zeros++;
 	}
 	printf("Fat ratio %i\n", zeros/sb->Fat_block);
-
+	return 0;
+	
 }
 
 int fs_create(const char *filename) // tester.c
@@ -277,6 +280,7 @@ int fs_lseek(int fd, size_t offset)
 		return -1;
 	else{
 		fileD[fd]->os = fileD[fd]->os+ offset;
+		return 0;
 	}
 }
 
