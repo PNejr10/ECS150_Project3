@@ -32,15 +32,25 @@ struct  __attribute__((__packed__)) rootDir {
 	uint8_t 	padding[10];
 };
 
+struct  __attribute__((__packed__)) file_descriptor {
+	char* 		Filename;
+	int			fdi;
+	int 		os;
+};
+
+
+
 struct superBlock *sb;
 struct fatBlock Fb; 
 struct rootDir *rd[FS_FILE_MAX_COUNT];
+struct file_descriptor *fileD[FS_OPEN_MAX_COUNT];
 
 int fs_mount(const char *diskname)
 {
 	sb = malloc(sizeof(struct superBlock));
 	//Fb = malloc(sizeof(struct fatBlock));
  	rd[FS_FILE_MAX_COUNT] = malloc (128 * sizeof(struct rootDir));
+	fileD[FS_OPEN_MAX_COUNT] = malloc(FS_OPEN_MAX_COUNT * (sizeof(struct file_descriptor)));
 
 
 	int open = block_disk_open(diskname);
@@ -188,24 +198,86 @@ int fs_ls(void)
 
 }
 
+
 int fs_open(const char *filename)
 {
 	/* TODO: Phase 3 */
+	if(mount == 0 || strlen(filename) > FS_FILENAME_LEN)
+		return -1;
+	
+	int found = 0;
+	for(int i =0; i< FS_FILE_MAX_COUNT; i++){
+		if(strcmp(filename, rd[i]->Filename)== 0){
+			found ++;
+			break;
+		}
+	}
+	if(found == 0)
+		return -1;
+
+	int open = 0;
+	for(int i =0; i < FS_OPEN_MAX_COUNT; i++){
+		if(strlen(fileD[i]->Filename) == 0){
+			strcpy(fileD[i]->Filename, filename);
+			fileD[i]->fdi = i;
+			fileD[i]->os = 0;
+			open ++;
+			break;
+		}
+	}
+	if(open == 1)
+		return 0;
+	else 
+		return -1;
+
 }
 
 int fs_close(int fd)
 {
 	/* TODO: Phase 3 */
+	if(mount == 0)
+		return -1;
+	if(fd > 31 || fd < 0)
+		return -1;
+	
+	if(strlen( fileD[fd]->Filename) == 0)
+		return -1;
+	else{
+		fileD[fd]->Filename = "";
+		fileD[fd]->fdi = 0;
+		return 0;
+	}
+	
 }
 
 int fs_stat(int fd)
 {
 	/* TODO: Phase 3 */
+	if(mount == 0)
+		return -1;
+	if(fd > 31 || fd < 0)
+		return -1;
+	if(strlen( fileD[fd]->Filename) == 0)
+		return -1;
+	else{
+		printf("FD Stats \n");
+		printf("File name %s\n", fileD[fd]->Filename);
+		printf("FD ID %d \n", fileD[fd]->fdi);
+		printf("File Offset %d \n", fileD[fd]->os);
+		return 0;
+	}
 }
 
 int fs_lseek(int fd, size_t offset)
 {
 	/* TODO: Phase 3 */
+	if(mount == 0 || fd > 31 || fd < 0)
+		return -1;
+	if(strlen( fileD[fd]->Filename) == 0)
+		return -1;
+	else{
+		fileD[fd]->os = fileD[fd]->os+ offset;
+	}
 }
 
 int fs_write(int fd, void *buf, size_t count)
