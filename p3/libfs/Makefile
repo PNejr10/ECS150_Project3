@@ -4,7 +4,7 @@ OBJ := disk.o fs.o
 
 CC := gcc
 LC := ar rcs
-CFLAGS := -Wall -Wextra -Werror -MMD
+CFLAGS := -Wall -Werror
 
 ## Debug flag
 ifneq ($(D),1)
