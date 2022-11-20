@@ -33,9 +33,9 @@
 	};
 
 	struct  __attribute__((__packed__)) file_descriptor {
-		uint8_t 	Filename[FS_FILENAME_LEN];
-		int			fdi;
-		int			os;
+		uint8_t 		Filename[FS_FILENAME_LEN];
+		int				fdi;
+		size_t			os;
 	};
 
 
@@ -47,13 +47,6 @@
 
 	int fs_mount(const char *diskname)
 	{
-		//sb = malloc(sizeof(struct superBlock));
-		//Fb = malloc(sizeof(struct fatBlock));
-		//rd[FS_FILE_MAX_COUNT] = malloc (sizeof(struct rootDir));
-		//fileD[FS_OPEN_MAX_COUNT] = malloc(FS_OPEN_MAX_COUNT * (sizeof(struct file_descriptor)));
-
-
-
 		int open = block_disk_open(diskname);
 		if(open == -1){
 			return -1;
@@ -120,14 +113,14 @@
 		int zerosRD = 0;
 		for (int  i =0; i< sb.Amout_Data_Block; i++ ){
 		
-		//	if(Fb.Fat_Block_index[i] == 0)
+		if(Fb.Fat_Block_index[i] == 0)
 				zerosFat++;
 		}
 		
 		printf("fat_free_ratio=%d/%d\n", zerosFat, sb.Amout_Data_Block);
 		
 		for (int  i =0; i< 128 ; i++ ){
-			if(rd[i].Filename == NULL)
+			if(rd[i].Filename[0] == 0)
 				zerosRD++;
 		}
 		printf("rdir_free_ratio=%d/%d\n",zerosRD,FS_FILE_MAX_COUNT);
@@ -143,23 +136,32 @@
 		*/
 		if(strlen(filename) >= FS_FILENAME_LEN || mount == 0)
 			return -1;
-		int add = 0;
+		//int add = 0;
 		for(int i =0; i < FS_FILE_MAX_COUNT; i++){
-			if(strcmp(filename,(char*)rd[i].Filename) == 0)
+			 if(strcmp(filename, (char*)rd[i].Filename) == 0)
 				return -1;
-
+			/*
 			if(strcmp((char*)rd[i].Filename, "\0")==0){
-				strcpy((char*)rd[i].Filename, filename);
+				memcpy(rd[i].Filename, filename, FS_FILENAME_LEN);
 				rd[i].file_Size = 0;
 				rd[i].index = 0xFFFF;
 				add = 1;
 				break;
 			}
+			*/
+			if(strcmp((char*)rd[i].Filename, "\0")==0){
+				memcpy(rd[i].Filename, filename, FS_FILENAME_LEN);
+				rd[i].file_Size = 0;
+				rd[i].index = 0xFFFF;
+		
+				printf("Here\n");
+				break;}
+			
 		}
-		if (add == 1)
-			return 0;
-		else 
+		
+
 			return -1;
+		
 	}
 
 	int fs_delete(const char *filename)
@@ -202,7 +204,7 @@
 			return -1;
 		printf("FS ls \n");
 		for(int i =0; i< FS_FILE_MAX_COUNT; i++){
-			if(strcmp((char*)rd[i].Filename, "\0")!=0){
+			if(rd[i].Filename[0] != '\0'){
 				printf("File name %s, File size %d, First Data Block %d\n", 
 				rd[i].Filename, rd[i].file_Size, rd[i].index);
 			}
@@ -226,28 +228,24 @@
 				break;
 			}
 		}
-		printf("Here\n");
 		if(found == 0)
 			return -1;
 
-		int open = 0;
+		//int open = 0;
 		for(int i =0; i < FS_OPEN_MAX_COUNT; i++){
-			//int size =strlen(fileD[i]->Filename);
-			//printf("Size %d",size);
+
 			printf("Here1\n");
-			if(strlen(fileD[i]->Filename) == 0){
+			if(fileD[i]->Filename[0] == 0){
 				printf("Here2\n");
-				memcpy(fileD[i].Filename, filename, FS_FILENAME_LEN);
+				memcpy(fileD[i]->Filename, filename, FS_FILENAME_LEN);
 				fileD[i]->fdi = i;
 				fileD[i]->os = 0;
-				open ++;
+				//open ++;
 				break;
 			}
+			printf("Here3\n");
 		}
-		if(open == 1)
-			return 0;
-		else 
-			return -1;
+		return 0;
 
 	}
 
@@ -259,10 +257,10 @@
 		if(fd > 31 || fd < 0)
 			return -1;
 		
-		if(strlen( fileD[fd]->Filename) == 0)
+		if(strlen( (char*)fileD[fd]->Filename) == 0)
 			return -1;
 		else{
-			fileD[fd]->Filename = "";
+			//memcpy(fileD[fd]->Filename, "", FS_FILENAME_LEN);
 			fileD[fd]->fdi = 0;
 			return 0;
 		}
@@ -276,13 +274,13 @@
 			return -1;
 		if(fd > 31 || fd < 0)
 			return -1;
-		if(strlen( fileD[fd]->Filename) == 0)
+		if(strlen( (char*)fileD[fd]->Filename) == 0)
 			return -1;
 		else{
 			printf("FD Stats \n");
 			printf("File name %s\n", fileD[fd]->Filename);
 			printf("FD ID %d \n", fileD[fd]->fdi);
-			printf("File Offset %d \n", fileD[fd]->os);
+			//printf("File Offset %d \n", fileD[fd]->os);
 			return 0;
 		}
 	}
@@ -292,10 +290,10 @@
 		/* TODO: Phase 3 */
 		if(mount == 0 || fd > 31 || fd < 0)
 			return -1;
-		if(strlen( fileD[fd]->Filename) == 0)
+		if(strlen((char*)fileD[fd]->Filename) == 0)
 			return -1;
 		else{
-			fileD[fd]->os = fileD[fd]->os+ offset;
+			fileD[fd]->os = offset;
 			return 0;
 		}
 	}
