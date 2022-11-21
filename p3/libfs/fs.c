@@ -129,17 +129,6 @@
 		
 		}
 	
-		/*
-		if(strcmp((char*)rd[i].Filename, "\0")==0){
-				memcpy(rd[i].Filename, filename, FS_FILENAME_LEN);
-				rd[i].file_Size = 0;
-				rd[i].index = 0xFFFF;
-				add = 1;
-				break;
-			}
-			*/
-
-			
 			
 
 	int fs_create(const char *filename) 
@@ -152,7 +141,7 @@
             return 0;
         }
 				
-		if(strcmp((char*)rd[i].Filename, "\0")==0){
+		if(rd[i].Filename[0] == '\0'){
 				memcpy(rd[i].Filename, filename, FS_FILENAME_LEN);
 				rd[i].file_Size = 0;
 				rd[i].index = 0xFFFF;
@@ -160,7 +149,6 @@
 				}
 		}
 		
-
 			return 0;
 		
 	}
@@ -218,7 +206,7 @@
 	int fs_open(const char *filename)
 	{
 		/* TODO: Phase 3 */
-		if(mount == 0 || strlen(filename) > FS_FILENAME_LEN)
+		if(mount == 0 || strlen(filename) > FS_FILENAME_LEN )
 			return -1;
 		
 		int found = 0;
@@ -233,10 +221,9 @@
 
 		for(int i =0; i < FS_OPEN_MAX_COUNT; i++){
 
-			if(strcmp((char*)rd[i].Filename, "\0")==0){
+			if(rd[i].Filename[0]== '\0'){
 				memcpy((char*)fileD[i].Filename, filename, FS_FILENAME_LEN);
 				fileD[i].os = 0;
-				printf("%s %d\n", fileD[i].Filename, i);
 				fileD[i].fdi = i;
 				return i;
 			}
@@ -271,20 +258,21 @@
 			return -1;
 		if(strlen( (char*)fileD[fd].Filename) == 0)
 			return -1;
-		else{
-			printf("FD Stats \n");
-			printf("File name %s\n", fileD[fd].Filename);
-			printf("FD ID %d \n", fileD[fd].fdi);
-			//printf("File Offset %d \n", fileD[fd].os);
-			return 0;
+		
+
+		for(int i =0; i < FS_FILE_MAX_COUNT; i++){
+			if(strcmp((char*)fileD[fd].Filename,(char*)rd[i].Filename)== 0){
+				return rd[i].file_Size;
+			}
 		}
+		return -1;
 	}
 
 	int fs_lseek(int fd, size_t offset)
 	{
 		/* TODO: Phase 3 */
 
-		if(mount == 0 || fd > 31 || fd < 0)
+		if(mount == 0 || fd > FS_OPEN_MAX_COUNT || fd < 0)
 			return -1;
 		
 		if(strlen((char*)fileD[fd].Filename) == 0){
@@ -293,6 +281,19 @@
 		fileD[fd].os = offset;
 		return 0;
 	
+	}
+
+	/*
+	Function needed for read an write
+	the function returns the data block that we are supposed to read from
+	*/
+	uint16_t helper(int fd, size_t os){
+		for(int i = 0; i < FS_FILE_MAX_COUNT; i++){
+			if(strcmp((char *)fileD[fd].Filename, (char*)rd[i].Filename))
+				return rd[i].index + os;
+		}
+		return -1;
+		
 	}
 
 	int fs_write(int fd, void *buf, size_t count)
@@ -309,11 +310,17 @@
 	int fs_read(int fd, void *buf, size_t count)
 	{
 		/* TODO: Phase 4 */
-		if(fd)
+		uint8_t read = 0;
+		if(mount ==0 || fd >FS_OPEN_MAX_COUNT || fd < 0 || buf == NULL)
 			return -1;
-		if(count > 0)
+		if(fileD[fd].Filename[0] == '\0')
 			return -1;
-		printf("%p\n", buf);
-		return 0;
+		for(int i =0; i < FS_FILE_MAX_COUNT; i++){
+			if(strcmp((char*)fileD[fd].Filename,(char*)rd[i].Filename)== 0){
+				printf("%s\n", rd[i].Filename);
+			}
+		}
+		return read;
+
 	}
 
