@@ -34,5 +34,3 @@ libfs.a: $(OBJ)
 clean:
 	echo "clean"
 	$(Q)rm -f $(OBJ) $(lib) $(deps)
-
-## TODO: Phase 1
