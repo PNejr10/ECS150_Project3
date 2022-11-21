@@ -311,11 +311,15 @@
 
 	int fs_read(int fd, void *buf, size_t count)
 	{	/* TODO: Phase 4 */
-	
-		// int returnIndex(fileOffset)
-		// {
 
-		// }
+		// check if bytes to read spans whole block (it should)
+
+		/* int returnIndex(fileOffset, datalocation/superblock)
+			{	
+				// helper to look in the disk for the data specified by file offest and return the index
+				// check if offset is aligned with the beginning of the block
+			}
+		*/
 		
 		if(fd)
 			return -1;
