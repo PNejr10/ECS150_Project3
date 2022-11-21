@@ -310,8 +310,13 @@
 	}
 
 	int fs_read(int fd, void *buf, size_t count)
-	{
-		/* TODO: Phase 4 */
+	{	/* TODO: Phase 4 */
+	
+		// int returnIndex(fileOffset)
+		// {
+
+		// }
+		
 		if(fd)
 			return -1;
 		if(count > 0)
